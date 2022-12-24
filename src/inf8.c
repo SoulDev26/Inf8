@@ -7,8 +7,8 @@ Inf8 Inf8_Init()
     Inf8 inf8;
     inf8.run = true;
 
-    inf8.eventStack.events = malloc(sizeof(Inf8_Event) * INF8_DEFAULT_EVENT_STACK_SIZE);
-    inf8.eventStack.nextEvent = inf8.eventStack.events;
+    inf8.eventStack = StackNew(sizeof(Inf8_Event));
+    StackReserve(&inf8.eventStack, INF8_DEFAULT_EVENT_STACK_SIZE);
 
     inf8.lastError.type = INF8_NOERROR;
     inf8.lastError.msg[0] = '\0';
@@ -29,7 +29,7 @@ bool Inf8_Destroy(Inf8 *inf8)
     if (inf8->game.dataIsAllocated) free(inf8->game.data);
     dlclose(inf8->game.dl);
 
-    free(inf8->eventStack.events);
+    StackDestroy(&inf8->eventStack);
 
     return false;
 }
@@ -88,28 +88,32 @@ bool Inf8_LoadGame(Inf8 *inf8, const char *gamePath)
     return false;
 }
 
+
 bool Inf8_PushEvent(Inf8 *inf8, Inf8_Event event)
 {
-    if ((inf8->eventStack.nextEvent - inf8->eventStack.events)
-        * sizeof(Inf8_Event) == INF8_DEFAULT_EVENT_STACK_SIZE) return true;
+    if (!inf8) return true;
 
-    *inf8->eventStack.nextEvent = event;
-    inf8->eventStack.nextEvent++;
+    StackPush(&inf8->eventStack, &event);
 
     return false;
 }
 
-Inf8_Event Inf8_PopEvent(Inf8 *inf8)
+bool Inf8_PopEvent(Inf8 *inf8, Inf8_Event *dst)
 {
-    Inf8_Event event;
-
-    if (inf8->eventStack.events == inf8->eventStack.nextEvent) 
+    if (!inf8) return true;
+    if (!dst)
     {
-        inf8->lastError.type = INF8_NO_EVENTS;
-        strcpy(inf8->lastError.msg, "No events");
-        return event;
+        inf8->lastError.type = INF8_DST_EVENT_IS_NULL;
+        strcpy(inf8->lastError.msg, "Inf8_PopEvent: *dst event is NULL");
+        return true;
     }
 
-    event = *--inf8->eventStack.nextEvent;
-    return event;
+    if (StackPop(&inf8->eventStack, dst))
+    {
+        inf8->lastError.type = INF8_NO_EVENTS;
+        strcpy(inf8->lastError.msg, "Inf8_PopEvent: no events in stack");
+        return true;
+    }
+
+    return false;
 }

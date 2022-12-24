@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_video.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -14,9 +15,10 @@ bool init(Inf8 *inf8)
         return true;
     }
 
-    inf8->win = SDL_CreateWindow("События",
+    inf8->win = SDL_CreateWindow("Infinity 8",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        INF8_DISPLAY_WIDTH, INF8_DISPLAY_HEIGHT, SDL_WINDOW_SHOWN);
+        INF8_DISPLAY_WIDTH*INF8_PIXEL_WIDTH, INF8_DISPLAY_HEIGHT*INF8_PIXEL_HEIGHT, 
+        SDL_WINDOW_SHOWN);
 
     if (inf8->win == NULL)
     {
@@ -66,22 +68,41 @@ int main(int argc, char *argv[])
     {
         while(SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) inf8.run = false;
+            Inf8_Event gameEvent;
 
-            if (event.type == SDL_KEYDOWN)
+            switch (event.type)
             {
-                Inf8_Event keydownEvent = {
-                    .type = INF8_EVENT_KEYDOWN,
-                    .keyCode = event.key.keysym.sym
-                };
+                case SDL_QUIT: inf8.run = false; break;
+                case SDL_KEYDOWN:
+                    gameEvent.type = INF8_EVENT_KEYDOWN;
+                    gameEvent.keyCode = event.key.keysym.sym;
 
-                Inf8_PushEvent(&inf8, keydownEvent);
-            }
+                    Inf8_PushEvent(&inf8, gameEvent);
+                    break;
+                case SDL_KEYUP:
+                    gameEvent.type = INF8_EVENT_KEYUP;
+                    gameEvent.keyCode = event.key.keysym.sym;
 
-            if (event.type == SDL_WINDOWEVENT_RESIZED)
-            {
+                    Inf8_PushEvent(&inf8, gameEvent);
+                    break;
+                case SDL_MOUSEMOTION:
+                    //printf("%d, %d\n", event.motion.x, event.motion.y);
+                    inf8.mouse.x = event.motion.x / INF8_PIXEL_WIDTH;
+                    inf8.mouse.y = event.motion.y / INF8_PIXEL_HEIGHT;
 
-                inf8.surface = SDL_GetWindowSurface(inf8.win);
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                    gameEvent.type = INF8_MOUSE_BUTTONDOWN;
+                    gameEvent.mouseButton = event.button.button;
+
+                    Inf8_PushEvent(&inf8, gameEvent);
+                    break;
+                case SDL_MOUSEBUTTONUP:
+                    gameEvent.type = INF8_MOUSE_BUTTONUP;
+                    gameEvent.mouseButton = event.button.button;
+
+                    Inf8_PushEvent(&inf8, gameEvent);
+                    break;
             }
         }
 
@@ -92,7 +113,12 @@ int main(int argc, char *argv[])
             for (u16 y = 0; y < INF8_DISPLAY_HEIGHT; y++)
             {
                 SDL_Color curPixel = inf8.display[x][y];
-                SDL_Rect r = {x, y, INF8_PIXEL_WIDTH, INF8_PIXEL_HEIGHT};
+                SDL_Rect r = {
+                    .x = x*INF8_PIXEL_WIDTH, 
+                    .y = y*INF8_PIXEL_HEIGHT,
+                    .w = INF8_PIXEL_WIDTH,
+                    .h = INF8_PIXEL_HEIGHT
+                };
 
                 //printf("%d, %d, %d\n", curPixel.r, curPixel.g, curPixel.b);
                 SDL_FillRect(inf8.surface, &r,

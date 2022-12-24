@@ -3,6 +3,7 @@
 
 #include <malloc.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "types.h"
@@ -14,17 +15,17 @@ typedef struct {
     u64 size;
     u64 copacity;
 
-    u32 itemSize;
+    size_t itemSize;
 } Stack;
 
 
-Stack StackNew(u32 itemSize);
+Stack StackNew(size_t itemSize);
 void StackDestroy(Stack *stack);
 
 void StackReserve(Stack *stack, u32 itemsCount);
 
 bool StackPush(Stack *stack, void *item);
-void* StackPop(Stack *stack, u64 id);
+bool StackPop(Stack *stack, void *dst);
 
 
 #endif

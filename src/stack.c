@@ -1,7 +1,7 @@
 #include "../include/stack.h"
 
 
-Stack StackNew(u32 itemSize)
+Stack StackNew(size_t itemSize)
 {
     Stack stack;
 
@@ -45,13 +45,17 @@ bool StackPush(Stack *stack, void *item)
     }
 
     memcpy(stack->items + stack->itemSize * stack->size, item, stack->itemSize);
+    stack->size++;
+
     return false;
 }
 
-void* StackPop(Stack *stack, u64 id)
+bool StackPop(Stack *stack, void *dst)
 {
-    void *item = malloc(stack->itemSize);
-    memcpy(item, stack->items + stack->itemSize * --stack->size, stack->itemSize);
+    if (dst == NULL) return true;
+    if (stack->size == 0) return true;
 
-    return item;
+    memcpy(dst, stack->items + stack->itemSize * --stack->size, stack->itemSize);
+
+    return false;
 }

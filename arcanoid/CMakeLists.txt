@@ -4,7 +4,7 @@ project(arcanoid LANGUAGES C)
 
 file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.c")
 
-add_library(arcanoid SHARED arcanoid.c ${SOURCES})
+add_library(arcanoid SHARED arcanoid.c ../src/inf8.c ../src/stack.c ${SOURCES})
 
 #find_package(SDL2 REQUIRED)
 #find_package(SDL2_image REQUIRED)
